@@ -1,30 +1,24 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from urllib import request
 from bs4 import BeautifulSoup
-
-driver = webdriver.Firefox()
-url = "https://www.imdb.com"
-wait = WebDriverWait(driver, 10)
-driver.get("https://www.imdb.com/chart/moviemeter/?ref_=nv_mv_mpm")
-wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".lister-list > tr > td.posterColumn")))
+import requests
 
 
-
-while True:
-    soup = BeautifulSoup(driver.page_source,"lxml")
-    for posterColumn in soup.select('.lister-list > tr > td.posterColumn'):
-        rating = posterColumn.contents[3]['data-value']
-        print(rating)
+def get_html(url):
+    r = requests.get(url)
+    if r.ok:
+        return r.text
+    else:
         exit()
-        links = url + item['href']
-        print(links)
 
-    try:
-        link = driver.find_element_by_id("next")
-        link.click()
-        wait.until(EC.staleness_of(link))
-    except Exception:
-        break
-driver.quit()
+html = get_html('https://www.imdb.com/chart/moviemeter/?ref_=nv_mv_mpm')
+soup = BeautifulSoup(html, "html.parser")
+
+# seed = []
+base_url = 'https://www.imdb.com'
+
+for posterColumn in soup.select('.lister-list > tr > td.posterColumn'):
+    rating = posterColumn.contents[3]['data-value']
+    if float(rating) >= 6.8:
+        a = posterColumn.find('a')
+        seed = base_url + a['href']
+        print(seed)
