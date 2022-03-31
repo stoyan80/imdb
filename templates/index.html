@@ -8,12 +8,14 @@
                 <th>Title</th>
                 <th>Director</th>
                 <th>Genres</th>
+                <th>Ratings</th>
             </tr>
             {% for obj in object_list %}
             <tr>
                 <td>{{ obj.title }}</td>
                 <td>{{ obj.director }}</td>
                 <td>{{ obj.genres }}</td>
+                <td>{{ obj.ratings }}</td>
             </tr>
             {% endfor %}
         </table>

@@ -1,16 +1,9 @@
 from urllib import request
 from bs4 import BeautifulSoup
-import csv, sqlite3, re
+import csv, sqlite3
 import requests
 
 
-
-# initialize csv headers
-def create_csv():
-    with open('mpm.csv', 'w') as csvfile:
-        fieldnames = ['title', 'director', 'genres', 'rating']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
 
 def get_html(url):
     r = requests.get(url)
@@ -18,7 +11,6 @@ def get_html(url):
         return r.text
     else:
         exit()
-
 
 html = get_html('https://www.imdb.com/chart/moviemeter/?ref_=nv_mv_mpm')
 soup = BeautifulSoup(html, "html.parser")
@@ -33,39 +25,61 @@ for posterColumn in soup.select('.lister-list > tr > td.posterColumn'):
         url = base_url + a['href']
         urls.append(url)
 
-for url in urls:
-    html = get_html(url)
-    soup = BeautifulSoup(html, "html.parser")
+def create_csv():
+    with open('mpm.csv', 'w') as csvfile:
+        # initialize csv headers
+        fieldnames = ['title', 'director', 'genres', 'ratings']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for url in urls:
+            html = get_html(url)
+            soup = BeautifulSoup(html, "html.parser")
+
+
+
+    # -------------------------------- get genres -------------------------------- #
+            genres = ''
+            genres_div = soup.find('div', attrs={'data-testid' : {'genres'}})
+            for gs in genres_div.find_all('span'):
+                genres+=' '+gs.text
 
 
 
 
-    genres = ' '
-    genres_div = soup.find('div', attrs={'data-testid' : {'genres'}})
-    for gs in genres_div.find_all('span'):
-        genres+=' '+gs.text
 
 
-    director = soup.find('div', {'class': 'ipc-metadata-list-item__content-container'}).find('ul').findChildren("a")[0].text
+    # ------------------------------- get director ------------------------------- #
 
-    movies_name = soup.find('div', {'class': 'sc-94726ce4-0 cMYixt'}).find('h1').text
+            director = soup.find('div', {'class': 'ipc-metadata-list-item__content-container'}).find('ul').findChildren("a")[0].text
 
-    rating = soup.find('div', {'class': 'sc-7ab21ed2-0 fAePGh'}).find('span').text
 
-    writer.writerow({'title': movies_name, 'director': director, 'genres': genres, 'IMDb Rating': rating})
 
+
+
+
+
+    # ------------------------------- get film name ------------------------------- #
+
+            movies_name = soup.find('div', {'class': 'sc-94726ce4-0 cMYixt'}).find('h1').text
+
+
+    # ------------------------------- get ratings ------------------------------- #
+
+            ratings = soup.find('div', {'class': 'sc-7ab21ed2-0 fAePGh'}).find('span').text
+
+            writer.writerow({'title': movies_name, 'director': director, 'genres': genres, 'ratings': ratings})
 
 
 def create_db():
     create_csv()
     conn = sqlite3.connect('mpm.db')
     c = conn.cursor()
-    c.execute('CREATE TABLE mpm (title, director, genres, rating);')
+    c.execute('CREATE TABLE mpm (title, director, genres, ratings);')
     with open('mpm.csv', 'r') as csv_file:
         dr = csv.DictReader(csv_file)
-        to_db = [(i['title'], i['director'], i['genres'],['rating']) for i in dr]
-        c.executemany('INSERT INTO mpm (title, director, genres, rating) VALUES (?, ?, ?, ?);', to_db)
-        conn.commit()
-        conn.close()
+        to_db = [(i['title'], i['director'], i['genres'], i['ratings']) for i in dr]
+    c.executemany('INSERT INTO mpm (title, director, genres, ratings) VALUES (?, ?, ?, ?);', to_db)
+    conn.commit()
+    conn.close()
 
 create_db()
