@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 import os, csv, sqlite3
+from flask_login import login_required
 
 # initialize flask app
 app = Flask(__name__)
@@ -21,7 +22,8 @@ def get_csv():
 @app.route('/')
 def index():
     csv_list = get_csv()
-    return render_template('index.html', object_list=csv_list)
+    return render_template('index.html',  object_list=csv_list)
+
 
 # endpoint to query by title
 @app.route('/title=<title>/')
